@@ -2,13 +2,16 @@ import React, { Component } from 'react';
 import classes from './App.module.css';
 import Persons from  '../components/Persons/Persons'
 import Cockpit from '../components/Cockpit/Cockpit'
+import withClass from '../hoc/withClass'
+import Aux from '../hoc/Auxiliary'
+import AuthContext from '../context/auth-context'
 
 
 class App extends Component {
   constructor(props) {
     super(props);
     console.log('[App.js] constructor');
-
+    this.state.person = []
     }
   
 state = {
@@ -20,10 +23,14 @@ state = {
   otherState: 'some other value',
   showPersons: false,
   showCockpit: true,
+  changeCounter: 0,
+  auth: false
 };
+
 
 componentDidMount() {
   console.log('[App.js] componentDidMount')
+  
 }
 
 shouldComponentUpdate(nextProps, nextState) {
@@ -50,7 +57,10 @@ person.name = event.target.value;
 const persons = [...this.state.persons]
 persons[personIndex] = person
 
-  this.setState( {persons: persons} )
+  this.setState((prevState, props) => {
+    return {
+    persons: persons, 
+    changeCounter: prevState.changeCounter +1}} )
 }
 
 deletePersonHandler = (personIndex) =>{
@@ -65,37 +75,45 @@ togglePersonsHandler = () => {
   this.setState ({showPersons: !doasShow})
 }
 
+loginHandler = () => {
+  this.setState({auth: true})
+}
 
   render() {
     
     let people = null;
     console.log('[App.js] RENDER!');
-
+    
     if (this.state.showPersons) {
       people = 
           <Persons 
           clicked={this.deletePersonHandler}
           changed={this.nameChangedHandler}
-          persons={this.state.persons} />
+          persons={this.state.persons} 
+          isAuthenticated={this.state.auth}/>
     }
 
    
 
     return (
      
-    <div className={classes.App}>
+    <Aux classes={classes.App}>
        <button onClick={() => {this.setState({showCockpit: false})}}>Remove Cockpit</button>
-      {this.state.showCockpit ? <Cockpit 
+      <AuthContext.Provider value={{auth: this.state.auth, login: this.loginHandler}}>
+      {this.state.showCockpit ? 
+      <Cockpit 
       title={this.props.appTitle}
       showPersons={this.state.showPersons}
-      persons={this.state.persons}
-      clicked={this.togglePersonsHandler} /> : null}
+      personsLength={this.state.persons.length}
+      clicked={this.togglePersonsHandler} 
+      /> : null}
       {people}
-    </div>
+      </AuthContext.Provider>
+    </Aux>
 
     )
   }
 }
 
 
-export default App;
+export default withClass(App, classes.App);
